@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Concivilmet</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        #chatbox {
+            width: 400px;
+            height: 550px;
+            border: 1px solid #4CAF50;
+            border-radius: 15px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: none;
+            flex-direction: column;
+            background-color: #A8D5BA;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        #header {
+            background-color: #4CAF50;
+            padding: 10px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        #logo {
+            margin: 5px 0;
+            background-color: #D0E8D1;
+            border-radius: 10px;
+            padding: 5px;
+        }
+        #bot-info {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #4CAF50;
+            background-color: #D0E8D1;
+            border-radius: 10px;
+        }
+        #bot-info img {
+            width: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        #messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #F3F9F4;
+        }
+        #messages div {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            max-width: 80%;
+        }
+        #messages .user-message {
+            background-color: #d4edda;
+            align-self: flex-end;
+        }
+        #messages .bot-message {
+            background-color: #e1f5fe;
+            align-self: flex-start;
+        }
+        #messages .welcome-message {
+            background-color: #A8D5BA;
+            color: #0c5460;
+            font-weight: bold;
+            align-self: flex-start;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #user-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #4CAF50;
+            background-color: #D0E8D1;
+            border-radius: 0 0 10px 10px;
+        }
+        #user-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.85em;
+        }
+        #user-input button {
+            padding: 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.3s;
+        }
+        #user-input button:hover {
+            background-color: #45a049; /* Color al pasar el mouse */
+        }
+        #chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            z-index: 1001;
+        }
+        #close-chat {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            float: right;
+            padding: 5px 10px;
+            margin: 5px;
+            font-size: 0.8em;
+        }
+        #user-form {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        #user-form input {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 0.85em;
+            transition: border-color 0.3s;
+        }
+        #user-form input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        #user-form button {
+            padding: 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.3s;
+        }
+        #user-form button:hover {
+            background-color: #45a049; /* Color al pasar el mouse */
+        }
+    </style>
+</head>
+<body>
+
+    <button id="chat-toggle" onclick="toggleChat()">👋 Chatea con nosotros</button>
+
+    <div id="chatbox">
+        <div id="header">
+            <button id="close-chat" onclick="closeChat()">Cerrar</button>
+            <div id="logo">
+                <img src="images/logo.png" alt="Logo Concivilmet" width="100" />
+            </div>
+        </div>
+        <div id="bot-info">
+            <img src="images/bot.png" alt="Bot" />
+            <span>👋 Chatea con Coni</span>
+        </div>
+        <div id="messages"></div>
+        <div id="user-input" style="display: none;">
+            <input type="text" id="user-message" placeholder="Escribe tu mensaje..." onkeypress="checkEnter(event)" />
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+        <div id="user-form" style="display: flex;">
+            <input type="text" id="user-name" placeholder="Tu nombre" />
+            <input type="text" id="user-phone" placeholder="Tu teléfono" />
+            <button onclick="submitUserInfo()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        const messages = document.getElementById('messages');
+        const userMessage = document.getElementById('user-message');
+        const chatToggleButton = document.getElementById('chat-toggle');
+        const userForm = document.getElementById('user-form');
+        const userInput = document.getElementById('user-input');
+
+        let userName = ''; // Variable para almacenar el nombre del usuario
+
+        // Definición de las respuestas categorizadas
+        const responses = {
+            greetings: ['hola', 'buenas', 'saludos', 'hey', 'buen día', 'buenas tardes', 'buenas noches'],
+            about: ['que es concivilmet', 'quienes son', 'que hacen', 'acerca de', 'informacion', 'que es'],
+            location: ['donde estan ubicados', 'ubicacion', 'direccion', 'donde esta', 'ubicación'],
+            contact: ['numero de contacto', 'telefono', 'contacto', 'como llamar', 'celular'],
+            employment: ['como trabajar', 'empleo', 'ofertas de trabajo', 'trabajar con nosotros', 'quiero trabajar'],
+            services: ['servicios', 'que ofrecen', 'que servicios tienen', 'que hacen'],
+            mission: ['mision', 'objetivo', 'proposito', 'qué es su misión'],
+            vision: ['vision', 'proyección', 'a futuro'],
+            values: ['valores', 'principios', 'ética', 'filosofia'],
+            projects: ['proyectos', 'trabajos', 'obras', 'realizados'],
+            moreInfo: ['más información', 'detalles', 'web', 'sitio web', 'más datos']
+        };
+
+        function toggleChat() {
+            const chatbox = document.getElementById('chatbox');
+            const isChatVisible = chatbox.style.display === 'flex';
+
+            chatbox.style.display = isChatVisible ? 'none' : 'flex';
+            chatToggleButton.textContent = isChatVisible ? '👋 Chatea con nosotros' : '';
+            if (!isChatVisible) {
+                clearChat(); // Limpiar el chat al cerrarlo
+                showUserForm(); // Mostrar el formulario al cerrarlo
+            } else {
+                setTimeout(() => {
+                    chatToggleButton.textContent = '👋 Chatea con nosotros';
+                }, 300);
+            }
+        }
+
+        function closeChat() {
+            const chatbox = document.getElementById('chatbox');
+            chatbox.style.display = 'none';
+            chatToggleButton.textContent = '👋 Chatea con nosotros';
+            clearChat(); // Limpiar el chat al cerrarlo
+            showUserForm(); // Mostrar el formulario al cerrarlo
+        }
+
+        function clearChat() {
+            messages.innerHTML = '';
+        }
+
+        function showUserForm() {
+            userForm.style.display = 'flex'; // Mostrar formulario
+            userInput.style.display = 'none'; // Ocultar entrada de mensajes
+            addMessage('Coni', '¡Hola! Por favor, ingresa tu nombre y número de teléfono para comenzar.', 'welcome-message');
+        }
+
+        function submitUserInfo() {
+            const nameInput = document.getElementById('user-name').value.trim();
+            const phoneInput = document.getElementById('user-phone').value.trim();
+
+            if (nameInput && phoneInput) {
+                userName = nameInput; // Guardar el nombre del usuario
+                addMessage('Coni', `¡Hola ${userName}! ¿Cómo puedo ayudarte hoy?`, 'bot-message');
+                document.getElementById('user-message').placeholder = `Escribe tu mensaje, ${userName}...`; // Cambiar el placeholder
+                document.getElementById('user-name').value = ''; // Limpiar campo nombre
+                document.getElementById('user-phone').value = ''; // Limpiar campo teléfono
+                userForm.style.display = 'none'; // Ocultar formulario
+                userInput.style.display = 'flex'; // Mostrar área de mensajes
+            } else {
+                addMessage('Coni', 'Por favor, ingresa tu nombre y número de teléfono antes de continuar.', 'bot-message');
+            }
+        }
+
+        function sendMessage() {
+            const messageText = userMessage.value.trim();
+            if (messageText) {
+                addMessage(userName || 'Usuario', messageText, 'user-message'); // Usar el nombre del usuario
+                userMessage.value = '';
+                processMessage(messageText);
+            }
+        }
+
+        function checkEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function addMessage(sender, text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = className;
+            messageDiv.textContent = `${sender}: ${text}`;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight; // Desplazarse hacia abajo automáticamente
+        }
+
+        function processMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            let category = '';
+
+            // Buscar la categoría basada en el mensaje del usuario
+            for (let key in responses) {
+                if (responses[key].some(keyword => lowerMessage.includes(keyword))) {
+                    category = key;
+                    break; // Salir del bucle cuando se encuentre la categoría
+                }
+            }
+
+            // Si encontramos una categoría válida, devolver la respuesta correspondiente
+            if (category) {
+                switch (category) {
+                    case 'greetings':
+                        addMessage('Coni', '¡Hola! ¿Cómo puedo ayudarte hoy?', 'bot-message');
+                        break;
+                    case 'about':
+                        addMessage('Coni', 'Concivilmet es una empresa dedicada a brindar soluciones integrales en construcción civil, ofreciendo servicios de supervisión de obras, consultoría técnica y gestión de proyectos.', 'bot-message');
+                        break;
+                    case 'location':
+                        addMessage('Coni', 'Estamos ubicados en Calle 13b # 38C-121 Piso 2 Tulua-Valle. Para más detalles, visita nuestra sección de contacto en la página web.', 'bot-message');
+                        break;
+                    case 'contact':
+                        addMessage('Coni', 'Puedes contactarnos al número: 3155473031. Estamos aquí para ayudarte.', 'bot-message');
+                        break;
+                    case 'employment':
+                        addMessage('Coni', 'Si estás interesado en trabajar con nosotros, puedes enviar tu currículum a nuestro correo electrónico: info@concivilmet.com. Siempre estamos buscando talento.', 'bot-message');
+                        break;
+                    case 'services':
+                        addMessage('Coni', 'En Concivilmet ofrecemos servicios de construcción civil, supervisión de obras, consultoría técnica y gestión de proyectos.', 'bot-message');
+                        break;
+                    case 'mission':
+                        addMessage('Coni', 'Nuestra misión es brindar soluciones de construcción de alta calidad, enfocadas en la satisfacción del cliente y el desarrollo sostenible.', 'bot-message');
+                        break;
+                    case 'vision':
+                        addMessage('Coni', 'Nuestra visión es ser líderes en el sector de la construcción civil, reconocidos por nuestra innovación y compromiso con la calidad.', 'bot-message');
+                        break;
+                    case 'values':
+                        addMessage('Coni', 'Nuestros valores incluyen la integridad, la excelencia, el trabajo en equipo y la responsabilidad social.', 'bot-message');
+                        break;
+                    case 'projects':
+                        addMessage('Coni', 'Hemos trabajado en una variedad de proyectos, incluyendo edificios comerciales, residenciales y obras de infraestructura. Consulta nuestra sección de proyectos en la página para más detalles.', 'bot-message');
+                        break;
+                    case 'moreInfo':
+                        addMessage('Coni', 'Puedes encontrar más información sobre nosotros en nuestro sitio web: www.concivilmet.com.', 'bot-message');
+                        break;
+                    default:
+                        addMessage('Coni', 'No estoy segura de responder a eso. ¿puedes intentar preguntar de otra manera?', 'bot-message');
+                        break;
+                }
+            } else {
+                addMessage('Coni', 'No estoy segura de responder a eso. ¿puedes intentar preguntar de otra manera?', 'bot-message');
+            }
+        }
+    </script>
+</body>
+</html>
